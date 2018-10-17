@@ -1,0 +1,24 @@
+# Test code for the netapp_e_iscsi_interface module
+# (c) 2018, NetApp, Inc
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
+
+- name: Test NetApp e-series facts module
+  fail:
+    msg: 'Please define netapp_e_api_username, netapp_e_api_password, netapp_e_api_host, netapp_e_ssid.'
+  when:  netapp_e_api_username is undefined or netapp_e_api_password is undefined or
+         netapp_e_api_host is undefined or netapp_e_ssid is undefined
+  vars:
+    credentials: &creds
+      api_url: "https://{{ netapp_e_api_host }}:8443/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+      log_path: facts.log
+
+- set_fact:
+    credentials: *creds
+
+- name: Verify facts are collected
+  netapp_e_facts:
+    <<: *creds
