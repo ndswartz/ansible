@@ -404,6 +404,13 @@ class Constructable(object):
                         prefix = keyed.get('prefix', '')
                         sep = keyed.get('separator', '_')
                         raw_parent_name = keyed.get('parent_group', None)
+                        if raw_parent_name:
+                            try:
+                                raw_parent_name = self.templar.template(raw_parent_name)
+                            except AnsibleError as e:
+                                if strict:
+                                    raise AnsibleParserError("Could not generate parent group %s for group %s: %s" % (raw_parent_name, key, to_native(e)))
+                                continue
 
                         new_raw_group_names = []
                         if isinstance(key, string_types):
@@ -420,16 +427,18 @@ class Constructable(object):
 
                         for bare_name in new_raw_group_names:
                             gname = self._sanitize_group_name('%s%s%s' % (prefix, sep, bare_name))
-                            self.inventory.add_group(gname)
-                            self.inventory.add_child(gname, host)
+                            result_gname = self.inventory.add_group(gname)
+                            self.inventory.add_child(result_gname, host)
 
                             if raw_parent_name:
                                 parent_name = self._sanitize_group_name(raw_parent_name)
                                 self.inventory.add_group(parent_name)
-                                self.inventory.add_child(parent_name, gname)
+                                self.inventory.add_child(parent_name, result_gname)
 
                     else:
-                        if strict:
-                            raise AnsibleParserError("No key or key resulted empty, invalid entry")
+                        # exclude case of empty list and dictionary, because these are valid constructions
+                        # simply no groups need to be constructed, but are still falsy
+                        if strict and key not in ([], {}):
+                            raise AnsibleParserError("No key or key resulted empty for %s in host %s, invalid entry" % (keyed.get('key'), host))
                 else:
                     raise AnsibleParserError("Invalid keyed group entry, it must be a dictionary: %s " % keyed)

@@ -2249,16 +2249,19 @@ class DockerServiceManager(object):
 
     def update_service(self, name, old_service, new_service):
         service_data = new_service.build_docker_service(self.get_networks_names_ids())
-        self.client.update_service(
+        result = self.client.update_service(
             old_service.service_id,
             old_service.service_version,
             name=name,
             **service_data
         )
+        # Prior to Docker SDK 4.0.0 no warnings were returned and will thus be ignored.
+        self.client.report_warnings(result, ['Warning'])
 
     def create_service(self, name, service):
         service_data = service.build_docker_service(self.get_networks_names_ids())
-        self.client.create_service(name=name, **service_data)
+        result = self.client.create_service(name=name, **service_data)
+        self.client.report_warnings(result, ['Warning'])
 
     def remove_service(self, name):
         self.client.remove_service(name)
