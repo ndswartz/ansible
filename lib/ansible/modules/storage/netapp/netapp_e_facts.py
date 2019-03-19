@@ -308,11 +308,8 @@ RETURN = """
                 sample: True
 """
 
-import logging
 from re import match
 from pprint import pformat
-
-from ansible.module_utils.basic import AnsibleModule, get_exception
 from ansible.module_utils.netapp import NetAppESeriesModule
 
 
@@ -610,15 +607,15 @@ class Facts(NetAppESeriesModule):
 
     def get_facts(self):
         """Get the embedded or web services proxy information."""
-        self._logger.info("isEmbedded: %s" % self.is_embedded())
+        self.module.log("isEmbedded: %s" % self.is_embedded())
         if self.is_embedded():
             facts = self.get_array_facts()
-            self._logger.info(pformat(facts))
+            self.module.log(pformat(facts))
             self.module.exit_json(msg="Gathered facts for storage array. Array ID: [%s]." % self.ssid,
                                   storage_array_facts=facts)
         else:
             facts = self.get_proxy_facts()
-            self._logger.info(pformat(facts))
+            self.module.log.info(pformat(facts))
             self.module.exit_json(msg="Gathered facts for web services proxy.", proxy_facts=facts)
 
 
